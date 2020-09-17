@@ -6,7 +6,7 @@
 /*
 Plugin Name: WP Trigger Bitbucket
 Plugin URI: https://github.com/gglukmann/wp-trigger-bitbucket
-Description: Save or update action triggers Bitbucket pipeline
+Description: Trigger Bitbucket pipeline from a widget on dashboard.
 Version: 1.0.0
 Author: Gert Glükmann
 Author URI: https://github.com/gglukmann
@@ -23,9 +23,13 @@ class WPTriggerBitbucket
 {
   function __construct()
   {
-    add_action('admin_init', array($this, 'general_settings_section'));
-    add_action('save_post', array($this, 'run_hook'), 10, 3);
-    add_action('wp_dashboard_setup', array($this, 'build_dashboard_widget'));
+    add_action('admin_init', [$this, 'generalSettingsSection']);
+    // add_action('save_post', [$this, 'runHook'], 10, 3);
+    add_action('wp_dashboard_setup', [$this, 'buildDashboardWidget']);
+
+    add_action('wp_enqueue_scripts', [$this, 'enqueueScripts']);
+    add_action('admin_enqueue_scripts', [$this, 'enqueueScripts']);
+    add_action('wp_ajax_wp_trigger_bitbucket_deployments_manual_trigger', [$this, 'runHook']);
   }
 
   public function activate()
@@ -39,10 +43,27 @@ class WPTriggerBitbucket
     flush_rewrite_rules();
   }
 
-  function run_hook($post_id)
+  public static function enqueueScripts()
   {
-    if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) return;
-    if (wp_is_post_revision($post_id) || wp_is_post_autosave($post_id)) return;
+    wp_enqueue_script(
+      'wp-trigger-bitbucket-deployments-widget',
+      plugins_url('/script.js', __FILE__),
+      ['jquery']
+    );
+
+    $button_nonce = wp_create_nonce('wp-trigger-bitbucket-deployments-button-nonce');
+
+    wp_localize_script('wp-trigger-bitbucket-deployments-widget', 'wpjd', [
+      'ajaxurl' => admin_url('admin-ajax.php'),
+      'deployment_button_nonce' => $button_nonce,
+    ]);
+  }
+
+  function runHook($post_id)
+  {
+    // if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) return;
+    // if (wp_is_post_revision($post_id) || wp_is_post_autosave($post_id)) return;
+    check_ajax_referer('wp-trigger-bitbucket-deployments-button-nonce', 'security');
 
     $username = get_option('bb_option_username');
     $password = get_option('bb_option_password');
@@ -69,18 +90,18 @@ class WPTriggerBitbucket
     }
   }
 
-  function general_settings_section()
+  function generalSettingsSection()
   {
     add_settings_section(
       'general_settings_section',
       'WP Trigger Bitbucket Settings',
-      array($this, 'my_section_options_callback'),
+      [$this, 'mySectionOptionsCallback'],
       'general'
     );
     add_settings_field(
       'bb_option_username',
       'Bitbucket Username',
-      array($this, 'my_textbox_callback'),
+      [$this, 'myTextboxCallback'],
       'general',
       'general_settings_section',
       array(
@@ -90,7 +111,7 @@ class WPTriggerBitbucket
     add_settings_field(
       'bb_option_password',
       'Bitbucket Password',
-      array($this, 'my_password_callback'),
+      [$this, 'myPasswordCallback'],
       'general',
       'general_settings_section',
       array(
@@ -100,7 +121,7 @@ class WPTriggerBitbucket
     add_settings_field(
       'bb_option_repo',
       'Repository Name',
-      array($this, 'my_textbox_callback'),
+      [$this, 'myTextboxCallback'],
       'general',
       'general_settings_section',
       array(
@@ -113,18 +134,18 @@ class WPTriggerBitbucket
     register_setting('general', 'bb_option_repo', 'esc_attr');
   }
 
-  function my_section_options_callback()
+  function mySectionOptionsCallback()
   {
     echo '<p>Add bitbucket username, password and repository name</p>';
   }
 
-  function my_textbox_callback($args)
+  function myTextboxCallback($args)
   {
     $option = get_option($args[0]);
     echo '<input type="text" id="' . $args[0] . '" name="' . $args[0] . '" value="' . $option . '" />';
   }
 
-  function my_password_callback($args)
+  function myPasswordCallback($args)
   {
     $option = get_option($args[0]);
     echo '<input type="password" id="' . $args[0] . '" name="' . $args[0] . '" value="' . $option . '" />';
@@ -133,19 +154,24 @@ class WPTriggerBitbucket
   /**
    * Create Dashboard Widget for Bitbucket pipeline deploy status
    */
-  function build_dashboard_widget()
+  function buildDashboardWidget()
   {
     global $wp_meta_boxes;
 
-    wp_add_dashboard_widget('bitbucket_pipeline_dashboard_status', 'Deploy Status', array($this, 'build_dashboard_status'));
+    wp_add_dashboard_widget('bitbucket_pipeline_dashboard_status', 'Deploy Status', [$this, 'buildDashboardWidgetContent']);
   }
 
-  function build_dashboard_status()
+  function buildDashboardWidgetContent()
   {
     $username = get_option('bb_option_username');
     $repo = get_option('bb_option_repo');
 
     $markup = '<img src="https://img.shields.io/bitbucket/pipelines/' . $username . '/' . $repo . '/master" alt="Bitbucket Pipeline Status" />';
+
+    $markup .= '<style>.wp-trigger-bitbucket-deployments-button:disabled { opacity: 0.4; } </style>';
+    $markup .= '<div style="margin-top: 1em">';
+    $markup .= '<button type="button" class="button button-primary wp-trigger-bitbucket-deployments-button">Deploy to live</button>';
+    $markup .= '</div>';
 
     echo $markup;
   }

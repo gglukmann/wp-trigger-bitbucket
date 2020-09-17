@@ -1,7 +1,7 @@
 # wp-trigger-bitbucket
 
 Plugin for WordPress.
-Save or update action triggers Bitbucket pipeline.
+Trigger Bitbucket pipeline from a widget on dashboard.
 
 ## Installation
 

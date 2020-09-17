@@ -5,7 +5,7 @@ License: GNU General Public License v2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
 == Description ==
-Save or update action triggers Bitbucket pipeline
+Trigger Bitbucket pipeline from a widget on dashboard.
 
 == Installation ==
 - Add to WordPress and activate
