@@ -7,4 +7,4 @@ Save or update action triggers Bitbucket pipeline.
 
 - Add to WordPress and activate
 - Go to Settings -> General and scroll to bottom
-- Add repository owner name, password, repository name and branch (can be empty, 'master' is default)
+- Add Bitbucket username, password and repository name

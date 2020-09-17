@@ -44,10 +44,9 @@ class WPTriggerBitbucket
     if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) return;
     if (wp_is_post_revision($post_id) || wp_is_post_autosave($post_id)) return;
 
-    $username = get_option('option_username');
-    $password = get_option('option_password');
-    $repo = get_option('option_repo');
-    $branch = get_option('option_branch') || 'master';
+    $username = get_option('bb_option_username');
+    $password = get_option('bb_option_password');
+    $repo = get_option('bb_option_repo');
 
     if ($username && $password && $repo) {
       $url = 'https://api.bitbucket.org/2.0/repositories/' . $username . '/' . $repo . '/pipelines/';
@@ -57,7 +56,7 @@ class WPTriggerBitbucket
           'target' => array(
             'ref_type' => 'branch',
             'type' => 'pipeline_ref_target',
-            'ref_name' => $branch
+            'ref_name' => 'master'
           )
         )),
         'headers' => array(
@@ -79,55 +78,44 @@ class WPTriggerBitbucket
       'general'
     );
     add_settings_field(
-      'option_username',
-      'Repository Owner Name',
+      'bb_option_username',
+      'Bitbucket Username',
       array($this, 'my_textbox_callback'),
       'general',
       'general_settings_section',
       array(
-        'option_username'
+        'bb_option_username'
       )
     );
     add_settings_field(
-      'option_password',
+      'bb_option_password',
       'Bitbucket Password',
       array($this, 'my_password_callback'),
       'general',
       'general_settings_section',
       array(
-        'option_password'
+        'bb_option_password'
       )
     );
     add_settings_field(
-      'option_repo',
+      'bb_option_repo',
       'Repository Name',
       array($this, 'my_textbox_callback'),
       'general',
       'general_settings_section',
       array(
-        'option_repo'
-      )
-    );
-    add_settings_field(
-      'option_branch',
-      'Branch Name',
-      array($this, 'my_textbox_callback'),
-      'general',
-      'general_settings_section',
-      array(
-        'option_branch'
+        'bb_option_repo'
       )
     );
 
-    register_setting('general', 'option_username', 'esc_attr');
-    register_setting('general', 'option_password', 'esc_attr');
-    register_setting('general', 'option_repo', 'esc_attr');
-    register_setting('general', 'option_branch', 'esc_attr');
+    register_setting('general', 'bb_option_username', 'esc_attr');
+    register_setting('general', 'bb_option_password', 'esc_attr');
+    register_setting('general', 'bb_option_repo', 'esc_attr');
   }
 
   function my_section_options_callback()
   {
-    echo '<p>Add repository owner name, password, repository name and branch (can be empty, "master" is default)</p>';
+    echo '<p>Add bitbucket username, password and repository name</p>';
   }
 
   function my_textbox_callback($args)
@@ -154,11 +142,10 @@ class WPTriggerBitbucket
 
   function build_dashboard_status()
   {
-    $username = get_option('option_username');
-    $repo = get_option('option_repo');
-    $branch = get_option('option_branch') || 'master';
+    $username = get_option('bb_option_username');
+    $repo = get_option('bb_option_repo');
 
-    $markup = '<img src="https://img.shields.io/bitbucket/pipelines/' . $username . '/' . $repo . '/' . $branch . '" alt="Bitbucket Pipeline Status" />';
+    $markup = '<img src="https://img.shields.io/bitbucket/pipelines/' . $username . '/' . $repo . '/master" alt="Bitbucket Pipeline Status" />';
 
     echo $markup;
   }
