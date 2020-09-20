@@ -93,7 +93,7 @@ class WPTriggerBitbucket
   function generalSettingsSection()
   {
     add_settings_section(
-      'general_settings_section',
+      'bb_general_settings_section',
       'WP Trigger Bitbucket Settings',
       [$this, 'mySectionOptionsCallback'],
       'general'
@@ -103,30 +103,24 @@ class WPTriggerBitbucket
       'Bitbucket Username',
       [$this, 'myTextboxCallback'],
       'general',
-      'general_settings_section',
-      array(
-        'bb_option_username'
-      )
+      'bb_general_settings_section',
+      ['bb_option_username']
     );
     add_settings_field(
       'bb_option_password',
       'Bitbucket Password',
       [$this, 'myPasswordCallback'],
       'general',
-      'general_settings_section',
-      array(
-        'bb_option_password'
-      )
+      'bb_general_settings_section',
+      ['bb_option_password']
     );
     add_settings_field(
       'bb_option_repo',
       'Repository Name',
       [$this, 'myTextboxCallback'],
       'general',
-      'general_settings_section',
-      array(
-        'bb_option_repo'
-      )
+      'bb_general_settings_section',
+      ['bb_option_repo']
     );
 
     register_setting('general', 'bb_option_username', 'esc_attr');
